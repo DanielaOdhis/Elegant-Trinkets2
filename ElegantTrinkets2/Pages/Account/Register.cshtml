@@ -1,0 +1,30 @@
+﻿@page
+@model ElegantTrinkets2.Pages.Account.RegisterModel
+@{
+    ViewData["Title"] = "Register";
+}
+
+<h2>Register</h2>
+
+<form method="post">
+    <div>
+        <label asp-for="Input.Username"></label>
+        <input asp-for="Input.Username" />
+        <span asp-validation-for="Input.Username"></span>
+    </div>
+    <div>
+        <label asp-for="Input.Password"></label>
+        <input asp-for="Input.Password" type="password" />
+        <span asp-validation-for="Input.Password"></span>
+    </div>
+    <div>
+        <label asp-for="Input.ConfirmPassword"></label>
+        <input asp-for="Input.ConfirmPassword" type="password" />
+        <span asp-validation-for="Input.ConfirmPassword"></span>
+    </div>
+    <button type="submit">Register</button>
+</form>
+
+<div>
+    <a href="@Url.Page("/Account/Login")">Already have an account? Login</a>
+</div>

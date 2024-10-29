@@ -1,0 +1,46 @@
+﻿@page
+@model ElegantTrinkets2.Pages.CartModel
+
+@{
+    ViewData["Title"] = "Cart";
+}
+
+<h2>Your Cart</h2>
+<div class="container">
+    <div class="row">
+        @foreach (var item in Model.CartItems)
+        {
+            <div class="col-md-4 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">@item.Name</h5>
+                        <p class="card-text">Price: $@item.Price</p>
+                        <p class="card-text">Quantity: @item.Quantity</p>
+
+                        <!-- Update form to modify quantity -->
+                        <form method="post" asp-page-handler="Update" class="mb-2">
+                            <input type="hidden" name="productId" value="@item.ProductId" />
+                            <label for="quantity">Quantity:</label>
+                            <input type="number" name="quantity" value="@item.Quantity" min="1" class="form-control mb-2" style="width: auto; display: inline;" />
+                            <button type="submit" class="btn btn-warning">Update</button>
+                        </form>
+
+                        <!-- Remove button to remove the item from cart -->
+                        <form method="post" asp-page-handler="Remove">
+                            <input type="hidden" name="productId" value="@item.ProductId" />
+                            <button type="submit" class="btn btn-danger">Remove</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Display the total price -->
+    <h3>Total Price: $@Model.TotalPrice</h3>
+
+    <!-- Checkout form to process the entire cart -->
+    <form method="post" asp-page-handler="Checkout">
+        <button type="submit" class="btn btn-success">Checkout</button>
+    </form>
+</div>
