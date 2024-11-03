@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using ElegantTrinkets2.Data;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Security.Claims;
 
 namespace ElegantTrinkets2.Pages
 {
@@ -25,7 +26,20 @@ namespace ElegantTrinkets2.Pages
 
         public async Task<IActionResult> OnPostAddToCartAsync(int productId)
         {
-            var userId = User.Identity.Name; // Assume username is the user ID
+            // Check if the user is authenticated
+            if (!User.Identity.IsAuthenticated)
+            {
+                return RedirectToPage("/Account/Login"); // Redirect to login page if not authenticated
+            }
+
+            // Retrieve the UserId from the claims
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null)
+            {
+                return RedirectToPage("/Account/Login"); // Redirect to login page if userId claim is not found
+            }
+
+            var userId = int.Parse(userIdClaim.Value); // Convert string to int
 
             var cartItem = new CartItem
             {
@@ -40,4 +54,4 @@ namespace ElegantTrinkets2.Pages
             return RedirectToPage("/Cart"); // Redirect to cart after adding
         }
     }
-}
+    }

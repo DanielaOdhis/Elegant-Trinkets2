@@ -5,10 +5,11 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorPages();
+builder.Services.AddControllers();
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"),
-    new MySqlServerVersion(new Version(8, 0, 21)))); // Adjust the version as needed
+    new MySqlServerVersion(new Version(8, 0, 21))));
 
 
 // Add authentication services
@@ -35,5 +36,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapGet("/", () => Results.Redirect("/Products"));
 
+app.MapControllers();
 app.MapRazorPages();
 app.Run();

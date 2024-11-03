@@ -53,8 +53,10 @@ namespace ElegantTrinkets2.Pages.Account
 
             var claims = new[]
             {
-        new Claim(ClaimTypes.Name, user.Username)
-    };
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+
+                new Claim(ClaimTypes.Name, user.Username)
+            };
             var claimsIdentity = new ClaimsIdentity(claims, "MyCookieAuth"); // Create claims identity
 
             var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);

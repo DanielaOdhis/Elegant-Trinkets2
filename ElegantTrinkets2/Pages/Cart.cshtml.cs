@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace ElegantTrinkets2.Pages
 {
@@ -24,7 +25,22 @@ namespace ElegantTrinkets2.Pages
 
         public async Task OnGetAsync()
         {
-            var userId = User.Identity.Name; // Get the user ID
+            if (!User.Identity.IsAuthenticated)
+            {
+                // Handle unauthenticated user (e.g., redirect to login)
+                // You could also choose to return or throw an exception if appropriate.
+                return; // or RedirectToPage("/Account/Login");
+            }
+
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null)
+            {
+                // Handle case where the user ID claim is missing
+                return; // or RedirectToPage("/Account/Login");
+            }
+
+            // Convert the user ID to int
+            var userId = int.Parse(userIdClaim);
 
             // Fetch cart items and their corresponding product details
             var cartItems = await _context.CartItems
@@ -51,7 +67,7 @@ namespace ElegantTrinkets2.Pages
 
         public async Task<IActionResult> OnPostCheckoutAsync()
         {
-            var userId = User.Identity.Name;
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)); // Get the user ID as an int
 
             // Logic for checkout
 
@@ -65,7 +81,7 @@ namespace ElegantTrinkets2.Pages
 
         public async Task<IActionResult> OnPostRemoveAsync(int productId)
         {
-            var userId = User.Identity.Name;
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)); // Get the user ID as an int
             var cartItem = await _context.CartItems
                 .FirstOrDefaultAsync(c => c.UserId == userId && c.ProductId == productId);
 
@@ -80,7 +96,7 @@ namespace ElegantTrinkets2.Pages
 
         public async Task<IActionResult> OnPostUpdateAsync(int productId, int quantity)
         {
-            var userId = User.Identity.Name;
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
             var cartItem = await _context.CartItems
                 .FirstOrDefaultAsync(c => c.UserId == userId && c.ProductId == productId);
 
