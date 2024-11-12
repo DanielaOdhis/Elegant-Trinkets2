@@ -5,6 +5,14 @@
 }
 
 <h2>Products</h2>
+
+<form method="get">
+    <div class="input-group mb-4">
+        <input type="text" class="form-control" name="searchQuery" value="@Model.SearchQuery" placeholder="Search products..." />
+        <button class="btn btn-primary" type="submit">Search</button>
+    </div>
+</form>
+
 <div class="container">
     <div class="row">
         @foreach (var product in Model.Products)

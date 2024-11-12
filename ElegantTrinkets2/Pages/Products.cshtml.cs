@@ -17,11 +17,26 @@ namespace ElegantTrinkets2.Pages
             _context = context;
         }
 
+        // Properties
         public List<Product> Products { get; set; }
+        public string SearchQuery { get; set; }  // Added property for search query
 
-        public async Task OnGetAsync()
+        public async Task OnGetAsync(string searchQuery)
         {
-            Products = await _context.Products.ToListAsync();
+            SearchQuery = searchQuery;  // Capture the search query from the URL
+
+            // If searchQuery is provided, filter products based on the query
+            if (!string.IsNullOrEmpty(searchQuery))
+            {
+                Products = await _context.Products
+                                          .Where(p => p.Name.Contains(searchQuery) || p.Description.Contains(searchQuery))
+                                          .ToListAsync();
+            }
+            else
+            {
+                // If no search query, show all products
+                Products = await _context.Products.ToListAsync();
+            }
         }
 
         public async Task<IActionResult> OnPostAddToCartAsync(int productId)
@@ -62,4 +77,4 @@ namespace ElegantTrinkets2.Pages
             return RedirectToPage("/Cart"); // Redirect to cart after adding
         }
     }
-    }
+}
