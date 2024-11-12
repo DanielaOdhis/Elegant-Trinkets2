@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-using static ElegantTrinkets2.Pages.CartModel;
+using System;
 
 namespace ElegantTrinkets2.Data
 {
@@ -22,6 +21,7 @@ namespace ElegantTrinkets2.Data
         public string Name { get; set; }
         public double Price { get; set; }
         public string Description { get; set; }
+        public string ImageUrl { get; set; }
     }
 
     public class CartItem
@@ -30,6 +30,7 @@ namespace ElegantTrinkets2.Data
         public int UserId { get; set; }
         public int ProductId { get; set; }
         public int Quantity { get; set; }
+        public string ImageUrl { get; set; }
     }
 
     public class User

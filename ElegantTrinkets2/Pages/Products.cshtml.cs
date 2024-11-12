@@ -41,10 +41,18 @@ namespace ElegantTrinkets2.Pages
 
             var userId = int.Parse(userIdClaim.Value); // Convert string to int
 
+            // Check if the product exists
+            var product = await _context.Products.FindAsync(productId);
+            if (product == null)
+            {
+                return NotFound(); // Handle case where the product is not found
+            }
+
             var cartItem = new CartItem
             {
                 UserId = userId,
                 ProductId = productId,
+                ImageUrl = product.ImageUrl,
                 Quantity = 1 // Default quantity
             };
 

@@ -1,16 +1,20 @@
 using Microsoft.EntityFrameworkCore;
 using ElegantTrinkets2.Data;
+using Microsoft.Extensions.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Add services to the container
 builder.Services.AddRazorPages();
 builder.Services.AddControllers();
 
+// Register ApplicationDbContext and configure MySQL connection
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"),
     new MySqlServerVersion(new Version(8, 0, 21))));
 
+// Register UnitOfWork service
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 // Add authentication services
 builder.Services.AddAuthentication("MyCookieAuth").AddCookie("MyCookieAuth", options =>
@@ -34,8 +38,9 @@ app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
-app.MapGet("/", () => Results.Redirect("/Products"));
 
+// Define route mappings
+app.MapGet("/", () => Results.Redirect("/Products"));
 app.MapControllers();
 app.MapRazorPages();
 app.Run();

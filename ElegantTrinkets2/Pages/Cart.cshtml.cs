@@ -13,11 +13,12 @@ namespace ElegantTrinkets2.Pages
     [Authorize]
     public class CartModel : PageModel
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public CartModel(ApplicationDbContext context)
+        // Constructor for dependency injection with IUnitOfWork
+        public CartModel(IUnitOfWork unitOfWork)
         {
-            _context = context;
+            _unitOfWork = unitOfWork;
         }
 
         public List<CartItemView> CartItems { get; set; } = new List<CartItemView>();
@@ -25,31 +26,14 @@ namespace ElegantTrinkets2.Pages
 
         public async Task OnGetAsync()
         {
-            if (!User.Identity.IsAuthenticated)
-            {
-                // Handle unauthenticated user (e.g., redirect to login)
-                // You could also choose to return or throw an exception if appropriate.
-                return; // or RedirectToPage("/Account/Login");
-            }
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
 
-            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null)
-            {
-                // Handle case where the user ID claim is missing
-                return; // or RedirectToPage("/Account/Login");
-            }
-
-            // Convert the user ID to int
-            var userId = int.Parse(userIdClaim);
-
-            // Fetch cart items and their corresponding product details
-            var cartItems = await _context.CartItems
-                .Where(c => c.UserId == userId)
-                .ToListAsync();
+            var cartItems = await _unitOfWork.CartItems.GetAllAsync();
+            cartItems = cartItems.Where(c => c.UserId == userId);
 
             foreach (var cartItem in cartItems)
             {
-                var product = await _context.Products.FindAsync(cartItem.ProductId);
+                var product = await _unitOfWork.Products.GetByIdAsync(cartItem.ProductId);
                 if (product != null)
                 {
                     CartItems.Add(new CartItemView
@@ -57,9 +41,9 @@ namespace ElegantTrinkets2.Pages
                         ProductId = product.Id,
                         Name = product.Name,
                         Price = product.Price,
-                        Quantity = cartItem.Quantity
+                        Quantity = cartItem.Quantity,
+                        ImageUrl = product.ImageUrl
                     });
-                    // Update total price
                     TotalPrice += product.Price * cartItem.Quantity;
                 }
             }
@@ -67,46 +51,50 @@ namespace ElegantTrinkets2.Pages
 
         public async Task<IActionResult> OnPostCheckoutAsync()
         {
-            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)); // Get the user ID as an int
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+            var cartItems = await _unitOfWork.CartItems.GetAllAsync();
+            cartItems = cartItems.Where(c => c.UserId == userId).ToList();
 
             // Logic for checkout
 
             // Clear the cart after checkout
-            var cartItems = _context.CartItems.Where(c => c.UserId == userId);
-            _context.CartItems.RemoveRange(cartItems);
-            await _context.SaveChangesAsync();
+            foreach (var cartItem in cartItems)
+            {
+                await _unitOfWork.CartItems.DeleteAsync(cartItem.Id);
+            }
+            await _unitOfWork.SaveAsync();
 
-            return RedirectToPage("/Index"); // Redirect after checkout
+            return RedirectToPage("/Index");
         }
 
         public async Task<IActionResult> OnPostRemoveAsync(int productId)
         {
-            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)); // Get the user ID as an int
-            var cartItem = await _context.CartItems
-                .FirstOrDefaultAsync(c => c.UserId == userId && c.ProductId == productId);
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+            var cartItems = await _unitOfWork.CartItems.GetAllAsync();
+            var cartItem = cartItems.FirstOrDefault(c => c.UserId == userId && c.ProductId == productId);
 
             if (cartItem != null)
             {
-                _context.CartItems.Remove(cartItem);
-                await _context.SaveChangesAsync();
+                await _unitOfWork.CartItems.DeleteAsync(cartItem.Id);
+                await _unitOfWork.SaveAsync();
             }
 
-            return RedirectToPage(); // Refresh the cart page
+            return RedirectToPage();
         }
 
         public async Task<IActionResult> OnPostUpdateAsync(int productId, int quantity)
         {
             var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
-            var cartItem = await _context.CartItems
-                .FirstOrDefaultAsync(c => c.UserId == userId && c.ProductId == productId);
+            var cartItems = await _unitOfWork.CartItems.GetAllAsync();
+            var cartItem = cartItems.FirstOrDefault(c => c.UserId == userId && c.ProductId == productId);
 
             if (cartItem != null && quantity > 0)
             {
                 cartItem.Quantity = quantity;
-                await _context.SaveChangesAsync();
+                await _unitOfWork.SaveAsync();
             }
 
-            return RedirectToPage(); // Refresh the cart page
+            return RedirectToPage();
         }
 
         public class CartItemView
@@ -115,6 +103,7 @@ namespace ElegantTrinkets2.Pages
             public string Name { get; set; }
             public double Price { get; set; }
             public int Quantity { get; set; }
+            public string ImageUrl { get; set; }
         }
     }
 }
