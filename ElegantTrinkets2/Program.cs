@@ -13,7 +13,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"),
     new MySqlServerVersion(new Version(8, 0, 21))));
 
-// Register UnitOfWork service
+// Register UnitOfWork and repositories
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 // Add authentication services
@@ -26,7 +26,7 @@ builder.Services.AddAuthentication("MyCookieAuth").AddCookie("MyCookieAuth", opt
 
 var app = builder.Build();
 
-// Middleware configuration
+// Configure the HTTP request pipeline
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error");
@@ -36,6 +36,8 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
+
+// Configure authentication and authorization
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -43,4 +45,5 @@ app.UseAuthorization();
 app.MapGet("/", () => Results.Redirect("/Products"));
 app.MapControllers();
 app.MapRazorPages();
+
 app.Run();

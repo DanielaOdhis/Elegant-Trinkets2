@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
 using ElegantTrinkets2.Data;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -10,11 +9,11 @@ namespace ElegantTrinkets2.Pages
 {
     public class ProductsModel : PageModel
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public ProductsModel(ApplicationDbContext context)
+        public ProductsModel(IUnitOfWork unitOfWork)
         {
-            _context = context;
+            _unitOfWork = unitOfWork;
         }
 
         // Properties
@@ -28,14 +27,14 @@ namespace ElegantTrinkets2.Pages
             // If searchQuery is provided, filter products based on the query
             if (!string.IsNullOrEmpty(searchQuery))
             {
-                Products = await _context.Products
-                                          .Where(p => p.Name.Contains(searchQuery) || p.Description.Contains(searchQuery))
-                                          .ToListAsync();
+                Products = (await _unitOfWork.Products.GetAllAsync())
+                            .Where(p => p.Name.Contains(searchQuery) || p.Description.Contains(searchQuery))
+                            .ToList(); // Convert to List after filtering
             }
             else
             {
                 // If no search query, show all products
-                Products = await _context.Products.ToListAsync();
+                Products = (await _unitOfWork.Products.GetAllAsync()).ToList(); // Convert to List directly
             }
         }
 
@@ -57,7 +56,7 @@ namespace ElegantTrinkets2.Pages
             var userId = int.Parse(userIdClaim.Value); // Convert string to int
 
             // Check if the product exists
-            var product = await _context.Products.FindAsync(productId);
+            var product = await _unitOfWork.Products.GetByIdAsync(productId);
             if (product == null)
             {
                 return NotFound(); // Handle case where the product is not found
@@ -71,8 +70,8 @@ namespace ElegantTrinkets2.Pages
                 Quantity = 1 // Default quantity
             };
 
-            _context.CartItems.Add(cartItem);
-            await _context.SaveChangesAsync();
+            await _unitOfWork.CartItems.AddAsync(cartItem); // Add to cart using the repository
+            await _unitOfWork.SaveAsync(); // Save changes through UnitOfWork
 
             return RedirectToPage("/Cart"); // Redirect to cart after adding
         }

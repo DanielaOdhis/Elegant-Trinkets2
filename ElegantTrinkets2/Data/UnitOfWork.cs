@@ -1,6 +1,4 @@
-﻿using System.Threading.Tasks;
-
-namespace ElegantTrinkets2.Data
+﻿namespace ElegantTrinkets2.Data
 {
     public class UnitOfWork : IUnitOfWork
     {
@@ -12,7 +10,7 @@ namespace ElegantTrinkets2.Data
         {
             _context = context;
             Products = new ProductRepository(_context);
-            CartItems = new CartItemRepository(_context);
+            CartItems = new CartItemRepository(_context); // Assuming you have a CartItemRepository as well
         }
 
         public async Task<int> SaveAsync() => await _context.SaveChangesAsync();
