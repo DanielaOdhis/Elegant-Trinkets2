@@ -10,7 +10,7 @@
         {
             _context = context;
             Products = new ProductRepository(_context);
-            CartItems = new CartItemRepository(_context); // Assuming you have a CartItemRepository as well
+            CartItems = new CartItemRepository(_context);
         }
 
         public async Task<int> SaveAsync() => await _context.SaveChangesAsync();

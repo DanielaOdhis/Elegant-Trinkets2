@@ -3,7 +3,6 @@ using ElegantTrinkets2.Data;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
 
 namespace ElegantTrinkets2.Controllers
 {
@@ -11,41 +10,42 @@ namespace ElegantTrinkets2.Controllers
     [ApiController]
     public class CartItemsController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IRepository<CartItem> _cartItemRepository;
 
-        public CartItemsController(ApplicationDbContext context)
+        public CartItemsController(IRepository<CartItem> cartItemRepository)
         {
-            _context = context;
+            _cartItemRepository = cartItemRepository;
         }
 
         // GET: api/cartitems
         [HttpGet]
         public async Task<ActionResult<IEnumerable<CartItem>>> GetCartItems()
         {
-            return await _context.CartItems.ToListAsync();
+            var result = await _cartItemRepository.GetAllAsync();
+            return Ok(result);
         }
 
         // GET: api/cartitems/user/{userId}
         [HttpGet("user/{userId}")]
         public async Task<ActionResult<IEnumerable<CartItem>>> GetCartItemsByUser(int userId)
         {
-            var cartItems = await _context.CartItems.Where(ci => ci.UserId == userId).ToListAsync();
+            var cartItems = (await _cartItemRepository.GetAllAsync())
+                            .Where(ci => ci.UserId == userId)
+                            .ToList();
 
             if (!cartItems.Any())
             {
                 return NotFound();
             }
 
-            return cartItems;
+            return Ok(cartItems);
         }
 
         // POST: api/cartitems
         [HttpPost]
         public async Task<ActionResult<CartItem>> AddCartItem(CartItem cartItem)
         {
-            _context.CartItems.Add(cartItem);
-            await _context.SaveChangesAsync();
-
+            await _cartItemRepository.AddAsync(cartItem);
             return CreatedAtAction(nameof(GetCartItems), new { id = cartItem.Id }, cartItem);
         }
 
@@ -58,19 +58,13 @@ namespace ElegantTrinkets2.Controllers
                 return BadRequest();
             }
 
-            _context.Entry(cartItem).State = EntityState.Modified;
-
             try
             {
-                await _context.SaveChangesAsync();
+                await _cartItemRepository.UpdateAsync(cartItem);
             }
-            catch (DbUpdateConcurrencyException)
+            catch
             {
-                if (!_context.CartItems.Any(e => e.Id == id))
-                {
-                    return NotFound();
-                }
-                throw;
+                return NotFound();
             }
 
             return NoContent();
@@ -80,16 +74,16 @@ namespace ElegantTrinkets2.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteCartItem(int id)
         {
-            var cartItem = await _context.CartItems.FindAsync(id);
+            var cartItem = await _cartItemRepository.GetByIdAsync(id);
             if (cartItem == null)
             {
                 return NotFound();
             }
 
-            _context.CartItems.Remove(cartItem);
-            await _context.SaveChangesAsync();
-
+            // Pass the id instead of the whole CartItem object
+            await _cartItemRepository.DeleteAsync(id);
             return NoContent();
         }
+
     }
 }

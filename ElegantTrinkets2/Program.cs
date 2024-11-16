@@ -16,6 +16,10 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // Register UnitOfWork and repositories
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
+// Register services for the shopping cart and product
+builder.Services.AddScoped<IRepository<CartItem>, CartItemRepository>();
+builder.Services.AddScoped<IRepository<Product>, ProductRepository>();
+
 // Add authentication services
 builder.Services.AddAuthentication("MyCookieAuth").AddCookie("MyCookieAuth", options =>
 {

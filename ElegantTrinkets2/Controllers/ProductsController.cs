@@ -6,29 +6,29 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 
 [Route("api/[controller]")]
-
 [ApiController]
 public class ProductsController : ControllerBase
 {
-    private readonly ApplicationDbContext _context;
+    private readonly IRepository<Product> _productRepository;
 
-    public ProductsController(ApplicationDbContext context)
+    public ProductsController(IRepository<Product> productRepository)
     {
-        _context = context;
+        _productRepository = productRepository;
     }
 
     // GET: api/products
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Product>>> GetProducts()
     {
-        return await _context.Products.ToListAsync();
+        var products = await _productRepository.GetAllAsync();
+        return Ok(products);
     }
 
     // GET: api/products/{id}
     [HttpGet("{id}")]
     public async Task<ActionResult<Product>> GetProduct(int id)
     {
-        var product = await _context.Products.FindAsync(id);
+        var product = await _productRepository.GetByIdAsync(id);
 
         if (product == null)
         {
@@ -42,9 +42,7 @@ public class ProductsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<Product>> PostProduct(Product product)
     {
-        _context.Products.Add(product);
-        await _context.SaveChangesAsync();
-
+        await _productRepository.AddAsync(product);
         return CreatedAtAction(nameof(GetProduct), new { id = product.Id }, product);
     }
 
@@ -57,19 +55,13 @@ public class ProductsController : ControllerBase
             return BadRequest();
         }
 
-        _context.Entry(product).State = EntityState.Modified;
-
         try
         {
-            await _context.SaveChangesAsync();
+            await _productRepository.UpdateAsync(product);
         }
-        catch (DbUpdateConcurrencyException)
+        catch (KeyNotFoundException)
         {
-            if (!_context.Products.Any(e => e.Id == id))
-            {
-                return NotFound();
-            }
-            throw;
+            return NotFound();
         }
 
         return NoContent();
@@ -79,15 +71,13 @@ public class ProductsController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteProduct(int id)
     {
-        var product = await _context.Products.FindAsync(id);
+        var product = await _productRepository.GetByIdAsync(id);
         if (product == null)
         {
             return NotFound();
         }
 
-        _context.Products.Remove(product);
-        await _context.SaveChangesAsync();
-
+        await _productRepository.DeleteAsync(id);
         return NoContent();
     }
 }
